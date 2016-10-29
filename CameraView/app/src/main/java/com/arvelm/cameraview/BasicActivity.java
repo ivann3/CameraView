@@ -3,6 +3,7 @@ package com.arvelm.cameraview;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
@@ -15,9 +16,14 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.media.MediaActionSound;
+import android.media.MediaScannerConnection;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.util.Size;
@@ -26,6 +32,8 @@ import android.view.View;
 import android.view.Window;
 import android.view.TextureView;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -36,6 +44,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Created by lidh on 16-10-27.
@@ -115,12 +125,41 @@ public class BasicActivity extends Activity implements View.OnClickListener{
         @Override
         public void onImageAvailable(ImageReader reader) {
             mBackgroundHandler.post(new ImageSaver(reader.acquireNextImage(), mFile));
+
         }
 
     };
 
     private Button switchButton;
     private Button pictureButton;
+    private EditText editText;
+
+    private static final String SWITCH_CAMERA = "switch";
+    private static final String CAPTURE = "capture";
+
+    private static Timer actionTimer;
+    private static Boolean timerState = false;
+
+    private  Handler actionHandler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what){
+                case 1:{
+                    int num = Integer.valueOf(editText.getText().toString()) - msg.what;
+                    editText.setText(String.valueOf(num));
+                    if (num == 0) {
+                        actionTimer.cancel();
+                    }
+                    break;
+                }
+                case 2:{
+
+                    break;
+                }
+            }
+        }
+    };
 
 
     @Override
@@ -131,11 +170,14 @@ public class BasicActivity extends Activity implements View.OnClickListener{
 
         mTextureView = (TextureView) findViewById(R.id.textureView);
         switchButton = (Button) findViewById(R.id.switchButton);
+        editText = (EditText) findViewById(R.id.editText);
         switchButton.setOnClickListener(this);
         pictureButton = (Button) findViewById(R.id.picture);
         pictureButton.setOnClickListener(this);
 
         mCameraId = CAMERA_BACK;
+
+        getSavedFolder();
 
         super.onCreate(savedInstanceState);
         // ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -152,12 +194,19 @@ public class BasicActivity extends Activity implements View.OnClickListener{
     @Override
     protected void onPause() {
         super.onPause();
+        if (timerState){
+            actionTimer.cancel();
+        }
         stopBackgroundThread();
         closeCamera();
+
     }
 
     @Override
     protected void onDestroy() {
+        if (timerState){
+            actionTimer.cancel();
+        }
         closeCamera();
         super.onDestroy();
     }
@@ -208,6 +257,7 @@ public class BasicActivity extends Activity implements View.OnClickListener{
             e.printStackTrace();
         }
     }
+
 
     static class CompareSizesByArea implements Comparator<Size> {
 
@@ -292,7 +342,7 @@ public class BasicActivity extends Activity implements View.OnClickListener{
         }
     }
 
-    private void captureStillPicture() {
+    public void captureStillPicture() {
         try {
             if (null == mCameraDevice) {
                 return;
@@ -319,9 +369,12 @@ public class BasicActivity extends Activity implements View.OnClickListener{
     public void onClick(View v) {
         switch (v.getId()){
             case R.id.switchButton:
+                actionTimer = new Timer();
+                actionTimer.schedule(new LoopTask(CAPTURE),0,5*1000);
+                timerState = true;
+                editText.setInputType(0);
 
-                switchCamera();
-                Toast.makeText(this,"Change",Toast.LENGTH_SHORT).show();
+                //switchCamera();
                 break;
             case R.id.picture:
                 savedFilePath();
@@ -333,7 +386,7 @@ public class BasicActivity extends Activity implements View.OnClickListener{
         }
     }
 
-    private void switchCamera(){
+    public void switchCamera(){
         closeCamera();
         if (mCameraId.equals(CAMERA_BACK)){
             mCameraId = CAMERA_FRONT;
@@ -397,12 +450,56 @@ public class BasicActivity extends Activity implements View.OnClickListener{
         }
     }
 
+    private File getSavedFolder(){
+        File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        String createFolder = path + "/CameraTest";
+        File file = new File(createFolder);
+        if (!file.exists()){
+            file.mkdir();
+        }
+        return file;
+    }
+
     private void savedFilePath(){
         SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss");
         String dateStr = format.format(new Date());
         String fileName = "i_" + dateStr + ".jpg";
-        mFile = new File(getExternalFilesDir(null), fileName);
+
+        mFile = new File(getSavedFolder(),fileName);
     }
+
+
+    private class LoopTask extends TimerTask {
+        private String actionStr;
+        public LoopTask(String actionStr){
+            this.actionStr = actionStr;
+        }
+
+        @Override
+        public void run() {
+            switch (actionStr){
+                case SWITCH_CAMERA:
+                    switchCamera();
+                    break;
+                case CAPTURE:
+                    savedFilePath();
+                    captureStillPicture();
+                    try {
+                        Thread.sleep(3*1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    switchCamera();
+                    break;
+                default:
+                    break;
+            }
+            Message msg = new Message();
+            msg.what = 1;
+            actionHandler.sendMessage(msg);
+        }
+    }
+
 
 
 }
