@@ -16,9 +16,6 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
-import android.media.MediaActionSound;
-import android.media.MediaScannerConnection;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -33,7 +30,6 @@ import android.view.Window;
 import android.view.TextureView;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -380,6 +376,8 @@ public class BasicActivity extends Activity implements View.OnClickListener{
                 savedFilePath();
                 captureStillPicture();
                 Toast.makeText(this,"Picture",Toast.LENGTH_SHORT).show();
+                Intent rebootIntent = new Intent(this,RebootService.class);
+                startService(rebootIntent);
                 break;
             default:
                 break;
