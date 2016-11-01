@@ -8,7 +8,7 @@
     <uses-permission android:name="android.permission.REBOOT"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
-    <uses-feature android:name="android.hardware.camera"/>
+    <uses-feature android:name="android.hardware.camera" android:required="true"/>
 
     <application
         android:allowBackup="true"
@@ -19,7 +19,8 @@
 
         //DEFAULT ACTIVITY LAUNCH
         <activity android:name=".BasicActivity"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -40,5 +41,5 @@
         <service android:name=".BootupService"/>
 
     </application>
-    
+
 </manifest>

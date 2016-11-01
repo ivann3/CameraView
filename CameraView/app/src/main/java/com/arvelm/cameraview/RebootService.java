@@ -15,7 +15,7 @@ import android.util.Log;
 public class RebootService extends Service {
     private PowerManager powerManager;
     private long  startTime;
-    private static final long DELAY_TIME = 5 * 1000;
+    public static final long DELAY_TIME = 60 * 1000;
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -50,7 +50,11 @@ public class RebootService extends Service {
                 while(true){
                     long currentTime = System.currentTimeMillis();
                     if (currentTime - startTime > DELAY_TIME ){
-                        powerManager.reboot(null);
+                        if (CamCase.getRebootServieTag()){
+                            powerManager.reboot(null);
+                        }else{
+                            stopSelf();
+                        }
                         break;
                     }
                 }

@@ -16,6 +16,7 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -23,12 +24,16 @@ import android.os.HandlerThread;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
+import android.text.InputType;
+import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 import android.view.View;
 import android.view.Window;
 import android.view.TextureView;
+import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 import java.io.File;
@@ -127,32 +132,41 @@ public class BasicActivity extends Activity implements View.OnClickListener{
     };
 
     private Button switchButton;
-    private Button pictureButton;
+    private CheckBox rebootCheckBox;
     private EditText editText;
 
-    private static final String SWITCH_CAMERA = "switch";
-    private static final String CAPTURE = "capture";
+    private static final String SWITCH_CAPTURE = "switch";
+    private static final String START_BUTTON_DISPLAY = "START";
+    private static final String STOP_BUTTON_DISPLAY = "STOP";
 
-    private static Timer actionTimer;
-    private static Boolean timerState = false;
+    private  Timer actionTimer;
+    private  Boolean timerState = false;
+
+    private  CamCase camCase;
 
     private  Handler actionHandler = new Handler(){
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             switch (msg.what){
-                case 1:{
-                    int num = Integer.valueOf(editText.getText().toString()) - msg.what;
+                case 1:
+                    savedFilePath();
+                    captureStillPicture();
+                    final int num = Integer.valueOf(editText.getText().toString()) - msg.what;
                     editText.setText(String.valueOf(num));
-                    if (num == 0) {
-                        actionTimer.cancel();
-                    }
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                Thread.sleep(1*1000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            switchCamera();
+                        }
+                    }).start();
+                    galleryAddPic();
                     break;
-                }
-                case 2:{
-
-                    break;
-                }
             }
         }
     };
@@ -163,17 +177,27 @@ public class BasicActivity extends Activity implements View.OnClickListener{
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.basic_layout);
+        /*Certain apps need to keep the screen turned on, such as games or movie apps.
+         *The best way to do this is to use the FLAG_KEEP_SCREEN_ON in your activity
+         *(and only in an activity, never in a service or other app component)
+         */
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         mTextureView = (TextureView) findViewById(R.id.textureView);
-        switchButton = (Button) findViewById(R.id.switchButton);
         editText = (EditText) findViewById(R.id.editText);
+        switchButton = (Button) findViewById(R.id.switchButton);
         switchButton.setOnClickListener(this);
-        pictureButton = (Button) findViewById(R.id.picture);
-        pictureButton.setOnClickListener(this);
+        rebootCheckBox = (CheckBox)findViewById(R.id.rebootCheckBox);
 
         mCameraId = CAMERA_BACK;
 
         getSavedFolder();
+
+        camCase = new CamCase(getApplicationContext());
+
+        restoreByCamCase();
+
+        startActivityFirstAction();
 
         super.onCreate(savedInstanceState);
         // ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -190,8 +214,10 @@ public class BasicActivity extends Activity implements View.OnClickListener{
     @Override
     protected void onPause() {
         super.onPause();
+        saveByCamCase();
         if (timerState){
             actionTimer.cancel();
+            timerState = false;
         }
         stopBackgroundThread();
         closeCamera();
@@ -200,10 +226,13 @@ public class BasicActivity extends Activity implements View.OnClickListener{
 
     @Override
     protected void onDestroy() {
+        saveByCamCase();
         if (timerState){
             actionTimer.cancel();
+            timerState = false;
         }
         closeCamera();
+
         super.onDestroy();
     }
 
@@ -365,21 +394,8 @@ public class BasicActivity extends Activity implements View.OnClickListener{
     public void onClick(View v) {
         switch (v.getId()){
             case R.id.switchButton:
-                actionTimer = new Timer();
-                actionTimer.schedule(new LoopTask(CAPTURE),0,5*1000);
-                timerState = true;
-                editText.setInputType(0);
-
-                //switchCamera();
-                break;
-            case R.id.picture:
-                savedFilePath();
-                captureStillPicture();
-                Toast.makeText(this,"Picture",Toast.LENGTH_SHORT).show();
-                Intent rebootIntent = new Intent(this,RebootService.class);
-                startService(rebootIntent);
-                break;
-            default:
+                saveByCamCase();
+                buttonClicked();
                 break;
         }
     }
@@ -448,6 +464,14 @@ public class BasicActivity extends Activity implements View.OnClickListener{
         }
     }
 
+
+    private void galleryAddPic() {
+        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        Uri contentUri = Uri.fromFile(mFile);
+        mediaScanIntent.setData(contentUri);
+        this.sendBroadcast(mediaScanIntent);
+    }
+
     private File getSavedFolder(){
         File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
         String createFolder = path + "/CameraTest";
@@ -464,6 +488,7 @@ public class BasicActivity extends Activity implements View.OnClickListener{
         String fileName = "i_" + dateStr + ".jpg";
 
         mFile = new File(getSavedFolder(),fileName);
+        Log.d("PATH-----",mFile.getAbsolutePath());
     }
 
 
@@ -476,28 +501,100 @@ public class BasicActivity extends Activity implements View.OnClickListener{
         @Override
         public void run() {
             switch (actionStr){
-                case SWITCH_CAMERA:
-                    switchCamera();
-                    break;
-                case CAPTURE:
-                    savedFilePath();
-                    captureStillPicture();
-                    try {
-                        Thread.sleep(3*1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+                case SWITCH_CAPTURE:
+                    int num = Integer.valueOf(editText.getText().toString().trim());
+                    if (num <= 0) {
+                        if(timerState){
+                            actionTimer.cancel();
+                            timerState = false;
+                        }
                     }
-                    switchCamera();
+                    else{
+                        switchAndCapture();
+                    }
                     break;
-                default:
-                    break;
+        }
+    }
+
+    private void switchAndCapture(){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep( 3 * 1000 );
+                    Message msg = new Message();
+                    msg.what = 1;
+                    actionHandler.sendMessage(msg);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
-            Message msg = new Message();
-            msg.what = 1;
-            actionHandler.sendMessage(msg);
+        }).start();
+    }}
+
+    private void buttonClicked(){
+        String buttonText = switchButton.getText().toString().trim();
+        switch (buttonText){
+            case START_BUTTON_DISPLAY:
+                int value = Integer.valueOf(editText.getText().toString().trim());
+                if (value > 0) {
+                    actionTimer = new Timer();
+                    actionTimer.schedule(new LoopTask(SWITCH_CAPTURE), 0, 6 * 1000);
+                    timerState = true;
+                    editText.setInputType(InputType.TYPE_NULL);
+                    rebootCheckBox.setEnabled(false);
+                    switchButton.setText(STOP_BUTTON_DISPLAY);
+                    switchButton.setBackgroundResource(R.drawable.button_red);
+                    checkBoxIsChecked(rebootCheckBox.isChecked());
+                }
+                break;
+            case STOP_BUTTON_DISPLAY:
+                if(timerState){
+                    actionTimer.cancel();
+                    timerState = false;
+                }
+                editText.setInputType(InputType.TYPE_CLASS_NUMBER);
+                rebootCheckBox.setEnabled(true);
+                switchButton.setText(START_BUTTON_DISPLAY);
+                switchButton.setBackgroundResource(R.drawable.button_green);
+                CamCase.setRebootServiceTag(false);
+                break;
         }
     }
 
 
+    private void checkBoxIsChecked(Boolean isChecked){
+        if (isChecked){
+            Intent intent = new Intent(this,RebootService.class);
+            startService(intent);
+            CamCase.setRebootServiceTag(true);
+            String toastText = "REBOOT AFTER " + RebootService.DELAY_TIME/1000 + "S";
+            Toast.makeText(this,toastText,Toast.LENGTH_LONG).show();
+        }
+    }
 
+    private void saveByCamCase(){
+        int times = Integer.valueOf(editText.getText().toString().trim());
+        Boolean isReboot = rebootCheckBox.isChecked();
+
+        camCase.saveData(times,isReboot,null);
+    }
+
+    private void restoreByCamCase(){
+        int times = camCase.getTimes();
+        Boolean isReboot = camCase.getIsReboot();
+
+        editText.setText(String.valueOf(times));
+        rebootCheckBox.setChecked(isReboot);
+    }
+
+    private void startActivityFirstAction() {
+        Boolean rebootBool = rebootCheckBox.isChecked();
+        int times = Integer.valueOf(editText.getText().toString().trim());
+        if (times > 0){
+            if (rebootBool){
+                buttonClicked();
+            }
+        }
+    }
 }

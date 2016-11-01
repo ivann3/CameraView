@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -11,18 +12,28 @@
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
             android:textAlignment="center"
-            android:text="9999999"
-            android:textSize="32sp"
-            android:inputType="numberDecimal"
-            android:maxLength="4" />
+            android:text="100"
+            android:textSize="24sp"
+            android:inputType="number"
+            android:maxLength="5"
+            android:textIsSelectable="false"
+            />
+
+        <CheckBox
+            android:id="@+id/rebootCheckBox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/editText"
+            android:layout_centerHorizontal="true"
+            android:text="Reboot"/>
 
     </RelativeLayout>
 
     <TextureView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:id="@+id/textureView"
-        android:layout_weight="5"/>
+            android:id="@+id/textureView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"/>
 
 
     <LinearLayout
@@ -31,19 +42,17 @@
 
         <Button
             android:id="@+id/switchButton"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Switch"/>
-
-        <Button
-            android:id="@+id/picture"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:layout_weight="1"
-            android:text="Picture"/>
+            android:text="START"
+            android:background="@drawable/button_green"
+            android:textColor="@color/colorWhite"
+            android:textSize="20sp"/>
 
 
-        </LinearLayout>
+    </LinearLayout>
+
+
 </LinearLayout>
+
