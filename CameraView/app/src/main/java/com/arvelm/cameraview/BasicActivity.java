@@ -13,6 +13,7 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
@@ -34,7 +35,6 @@ import android.view.TextureView;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.Checkable;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -49,6 +49,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
+import org.apache.log4j.Logger;
 
 /**
  * Created by lidh on 16-10-27.
@@ -147,6 +148,8 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
 
     private  CamCase camCase;
 
+    private static  final Logger MY_LOG = Logging.configureLogger(BasicActivity.class);
+
     private  Handler actionHandler = new Handler(){
         @Override
         public void handleMessage(Message msg) {
@@ -163,11 +166,11 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
                         @Override
                         public void run() {
                             try {
-                                Thread.sleep(1*1000);
+                                Thread.sleep(2*1000);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
-                            switchCamera();
+                            if (timerState) switchCamera();
                         }
                     }).start();
 
@@ -212,6 +215,8 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
 
         startActivityFirstAction();
 
+        MY_LOG.debug("----------CREATE----------");
+
         super.onCreate(savedInstanceState);
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -245,7 +250,8 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
             timerState = false;
         }
         closeCamera();
-
+        MY_LOG.debug("----------DESTORYED----------");
+        MY_LOG.debug("");
         super.onDestroy();
     }
 
@@ -291,6 +297,9 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
         CameraManager mCameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
         try {
             mCameraManager.openCamera(mCameraId, mStateCallBack, mBackgroundHandler);
+            MY_LOG.debug("----------OPEN----------");
+            if (mCameraId.equals(CAMERA_BACK)) MY_LOG.debug("BACK_Camera: Open");
+            if (mCameraId.equals(CAMERA_FRONT)) MY_LOG.debug("FRONT_Camera: Open");
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -364,6 +373,8 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
                                 mPreviewRequest = mPreviewRequestBuilder.build();
                                 mCameraCaptureSession.setRepeatingRequest(mPreviewRequest,
                                         null, null);
+                                if (mCameraId.equals(CAMERA_BACK)) MY_LOG.debug("BACK_Camera: Open Complete");
+                                if (mCameraId.equals(CAMERA_FRONT)) MY_LOG.debug("FRONT_Camera: Open Complete");
                             } catch (CameraAccessException e) {
                                 e.printStackTrace();
                             }
@@ -396,8 +407,14 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
             //setAutoFlash(captureBuilder);
 
             mCameraCaptureSession.stopRepeating();
+            if (mCameraId.equals(CAMERA_BACK)) MY_LOG.debug("BACK_Camera: Capture");
+            if (mCameraId.equals(CAMERA_FRONT)) MY_LOG.debug("FRONT_Camera: Capture");
 
-            mCameraCaptureSession.capture(captureBuilder.build(), null, null);
+            mCameraCaptureSession.capture(captureBuilder.build(),null, null);
+
+            if (mCameraId.equals(CAMERA_BACK)) MY_LOG.debug("BACK_Camera: Capture Complete");
+            if (mCameraId.equals(CAMERA_FRONT)) MY_LOG.debug("FRONT_Camera: Capture Complete");
+
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -442,6 +459,9 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
             mCameraDevice.close();
             mCameraDevice = null;
         }
+        if (mCameraId.equals(CAMERA_BACK)) MY_LOG.debug("BACK_Camera: Close");
+        if (mCameraId.equals(CAMERA_FRONT)) MY_LOG.debug("FRONT_Camera: Close");
+        MY_LOG.debug("----------CLOSE---------");
     }
 
     /**
@@ -497,7 +517,7 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
 
     private File getSavedFolder(){
         File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        String createFolder = path + "/CameraTest";
+        String createFolder = path + "/CameraView";
         File file = new File(createFolder);
         if (!file.exists()){
             file.mkdir();
