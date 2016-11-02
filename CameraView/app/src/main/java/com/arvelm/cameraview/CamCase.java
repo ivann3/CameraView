@@ -11,38 +11,37 @@ public class CamCase {
 
     private static final int DEFAULT_TIMES = 100;
     private static final Boolean DEFAULT_REBOOT = false;
-    private static final String DEFAULT_TEXT = "START";
+
 
     private static final String TIMES_KEY = "times";
     private static final String REBOOT_KEY = "isReboot";
-    private static final String TEXT_KEY = "buttonText";
+    private static final String REBOOTTIME_KEY = "rebootTime";
 
     private static final String FILE_NAME = "CameraCase";
 
     //when user stop the timerTask,set the rebootServiceTag=false,the RebootService would not Execute
     private static Boolean rebootServiceTag = false;
 
-
     private Context context;
-    public int times;
-    public Boolean isReboot;
-    public String buttonText;
+    private int times;
+    private Boolean isReboot;
+    private int rebootTime;
 
     private SharedPreferences casePreferences;
 
     public CamCase(final Context context){
         times = 0;
         isReboot = false;
-        buttonText = DEFAULT_TEXT;
+        rebootTime = 0;
         this.context = context;
         casePreferences =  context.getSharedPreferences(FILE_NAME,0);
     }
 
-    public void saveData(int times,Boolean isReboot,String buttonText){
+    public void saveData(int times,Boolean isReboot,int rebootTime){
         SharedPreferences.Editor editor = casePreferences.edit();
         editor.putInt(TIMES_KEY,times);
         editor.putBoolean(REBOOT_KEY,isReboot);
-        editor.putString(TEXT_KEY,buttonText);
+        editor.putInt(REBOOTTIME_KEY,rebootTime);
         editor.commit();
     }
 
@@ -54,15 +53,18 @@ public class CamCase {
         return casePreferences.getBoolean(REBOOT_KEY,DEFAULT_REBOOT);
     }
 
-    public String getButtonText() {
-        return casePreferences.getString(TEXT_KEY,DEFAULT_TEXT);
+
+    public int getRebootTime(){
+        return casePreferences.getInt(REBOOTTIME_KEY,0);
     }
 
-    public static Boolean getRebootServieTag(){
+    public static Boolean getRebootServiceTag(){
         return rebootServiceTag;
     }
 
     public static void setRebootServiceTag(Boolean serviceTag) {
         rebootServiceTag = serviceTag;
     }
+
+
 }

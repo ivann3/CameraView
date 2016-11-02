@@ -13,7 +13,8 @@
             android:layout_centerHorizontal="true"
             android:textAlignment="center"
             android:text="100"
-            android:textSize="24sp"
+            android:hint="times"
+            android:textSize="20sp"
             android:inputType="number"
             android:maxLength="5"
             android:textIsSelectable="false"
@@ -26,6 +27,20 @@
             android:layout_below="@id/editText"
             android:layout_centerHorizontal="true"
             android:text="Reboot"/>
+
+        <EditText
+            android:id="@+id/editText_2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@+id/editText"
+            android:layout_marginStart="12dp"
+            android:textAlignment="center"
+            android:textSize="20sp"
+            android:text="1"
+            android:hint="mins"
+            android:inputType="number"
+            android:visibility="invisible"
+            android:maxLength="3" />
 
     </RelativeLayout>
 

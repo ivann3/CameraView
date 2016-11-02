@@ -3,6 +3,7 @@ package com.arvelm.cameraview;
 import android.app.Service;
 import android.app.admin.SystemUpdatePolicy;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.annotation.Nullable;
@@ -15,7 +16,8 @@ import android.util.Log;
 public class RebootService extends Service {
     private PowerManager powerManager;
     private long  startTime;
-    public static final long DELAY_TIME = 60 * 1000;
+    public static long DELAY_TIME = 60 * 1000;
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -43,14 +45,13 @@ public class RebootService extends Service {
 
     private void rebootAction(){
         startTime = System.currentTimeMillis();
-
         new Thread(new Runnable() {
             @Override
             public void run() {
                 while(true){
                     long currentTime = System.currentTimeMillis();
                     if (currentTime - startTime > DELAY_TIME ){
-                        if (CamCase.getRebootServieTag()){
+                        if (CamCase.getRebootServiceTag()){
                             powerManager.reboot(null);
                         }else{
                             stopSelf();

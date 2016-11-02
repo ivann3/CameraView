@@ -34,6 +34,8 @@ import android.view.TextureView;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.Checkable;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Toast;
 import java.io.File;
@@ -52,7 +54,7 @@ import java.util.TimerTask;
  * Created by lidh on 16-10-27.
  */
 
-public class BasicActivity extends Activity implements View.OnClickListener{
+public class BasicActivity extends Activity implements View.OnClickListener,CompoundButton.OnCheckedChangeListener{
 
     private TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
         @Override
@@ -134,6 +136,7 @@ public class BasicActivity extends Activity implements View.OnClickListener{
     private Button switchButton;
     private CheckBox rebootCheckBox;
     private EditText editText;
+    private EditText editText2;
 
     private static final String SWITCH_CAPTURE = "switch";
     private static final String START_BUTTON_DISPLAY = "START";
@@ -152,8 +155,10 @@ public class BasicActivity extends Activity implements View.OnClickListener{
                 case 1:
                     savedFilePath();
                     captureStillPicture();
-                    final int num = Integer.valueOf(editText.getText().toString()) - msg.what;
-                    editText.setText(String.valueOf(num));
+                    if (!rebootCheckBox.isChecked()) {
+                        final int num = Integer.valueOf(editText.getText().toString()) - msg.what;
+                        editText.setText(String.valueOf(num));
+                    }
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -165,7 +170,13 @@ public class BasicActivity extends Activity implements View.OnClickListener{
                             switchCamera();
                         }
                     }).start();
-                    galleryAddPic();
+
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            galleryAddPic();
+                        }
+                    }).start();
                     break;
             }
         }
@@ -188,6 +199,8 @@ public class BasicActivity extends Activity implements View.OnClickListener{
         switchButton = (Button) findViewById(R.id.switchButton);
         switchButton.setOnClickListener(this);
         rebootCheckBox = (CheckBox)findViewById(R.id.rebootCheckBox);
+        rebootCheckBox.setOnCheckedChangeListener(this);
+        editText2 = (EditText)findViewById(R.id.editText_2);
 
         mCameraId = CAMERA_BACK;
 
@@ -400,6 +413,16 @@ public class BasicActivity extends Activity implements View.OnClickListener{
         }
     }
 
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        if (isChecked){
+            editText2.setVisibility(View.VISIBLE);
+        }else{
+            editText2.setVisibility(View.INVISIBLE);
+        }
+
+    }
+
     public void switchCamera(){
         closeCamera();
         if (mCameraId.equals(CAMERA_BACK)){
@@ -488,7 +511,7 @@ public class BasicActivity extends Activity implements View.OnClickListener{
         String fileName = "i_" + dateStr + ".jpg";
 
         mFile = new File(getSavedFolder(),fileName);
-        Log.d("PATH-----",mFile.getAbsolutePath());
+        Log.d("mFile:PATH-----",mFile.toString());
     }
 
 
@@ -536,16 +559,22 @@ public class BasicActivity extends Activity implements View.OnClickListener{
         String buttonText = switchButton.getText().toString().trim();
         switch (buttonText){
             case START_BUTTON_DISPLAY:
-                int value = Integer.valueOf(editText.getText().toString().trim());
-                if (value > 0) {
-                    actionTimer = new Timer();
-                    actionTimer.schedule(new LoopTask(SWITCH_CAPTURE), 0, 6 * 1000);
-                    timerState = true;
-                    editText.setInputType(InputType.TYPE_NULL);
-                    rebootCheckBox.setEnabled(false);
-                    switchButton.setText(STOP_BUTTON_DISPLAY);
-                    switchButton.setBackgroundResource(R.drawable.button_red);
-                    checkBoxIsChecked(rebootCheckBox.isChecked());
+                String textStr = editText.getText().toString().trim();
+                if (!("".equals(textStr)) || textStr.length() > 0 ) {
+                    int value = Integer.valueOf(textStr);
+                    if (value > 0) {
+                        actionTimer = new Timer();
+                        actionTimer.schedule(new LoopTask(SWITCH_CAPTURE), 0, 6 * 1000);
+                        timerState = true;
+                        editText.setInputType(InputType.TYPE_NULL);
+                        if(editText2.getVisibility() == View.VISIBLE){
+                            editText2.setInputType(InputType.TYPE_NULL);
+                        }
+                        rebootCheckBox.setEnabled(false);
+                        switchButton.setText(STOP_BUTTON_DISPLAY);
+                        switchButton.setBackgroundResource(R.drawable.button_red);
+                        checkBoxIsChecked(rebootCheckBox.isChecked());
+                    }
                 }
                 break;
             case STOP_BUTTON_DISPLAY:
@@ -554,6 +583,9 @@ public class BasicActivity extends Activity implements View.OnClickListener{
                     timerState = false;
                 }
                 editText.setInputType(InputType.TYPE_CLASS_NUMBER);
+                if(editText2.getVisibility() == View.VISIBLE){
+                    editText2.setInputType(InputType.TYPE_CLASS_NUMBER);
+                }
                 rebootCheckBox.setEnabled(true);
                 switchButton.setText(START_BUTTON_DISPLAY);
                 switchButton.setBackgroundResource(R.drawable.button_green);
@@ -565,32 +597,68 @@ public class BasicActivity extends Activity implements View.OnClickListener{
 
     private void checkBoxIsChecked(Boolean isChecked){
         if (isChecked){
-            Intent intent = new Intent(this,RebootService.class);
-            startService(intent);
-            CamCase.setRebootServiceTag(true);
-            String toastText = "REBOOT AFTER " + RebootService.DELAY_TIME/1000 + "S";
-            Toast.makeText(this,toastText,Toast.LENGTH_LONG).show();
+            String textStr = editText2.getText().toString().trim();
+            if (!("".equals(textStr)) || textStr.length() > 0) {
+                long delayTime = Long.valueOf(textStr);
+                RebootService.DELAY_TIME = delayTime * 60 * 1000;
+                Intent intent = new Intent(this, RebootService.class);
+//                intent.putExtra("delayTime", delayTime);
+                startService(intent);
+                CamCase.setRebootServiceTag(true);
+                String toastText = "REBOOT AFTER " + textStr + " MINUTES";
+                Toast.makeText(this, toastText, Toast.LENGTH_LONG).show();
+            }else{
+                rebootCheckBox.setChecked(false);
+                editText2.setInputType(InputType.TYPE_CLASS_NUMBER);
+            }
         }
     }
 
     private void saveByCamCase(){
-        int times = Integer.valueOf(editText.getText().toString().trim());
+        String textStr = editText.getText().toString().trim();
+        int times = 0;
+        int rebootTime =0 ;
         Boolean isReboot = rebootCheckBox.isChecked();
 
-        camCase.saveData(times,isReboot,null);
+        if (!("".equals(textStr)) || textStr.length() > 0) {
+            times = Integer.valueOf(textStr);
+        }
+
+        if (editText2.getVisibility() == View.VISIBLE){
+            textStr = editText2.getText().toString().trim();
+            if (!("".equals(textStr)) || textStr.length() > 0) {
+                rebootTime = Integer.valueOf(textStr);
+                camCase.saveData(times,isReboot,rebootTime);
+            }
+            Log.d("TIMES-----",String.valueOf(times));
+            Log.d("REBOOTTIME-----",String.valueOf(rebootTime));
+            Log.d("ISREBOOT-----",isReboot.toString());
+            return;
+        }
+        camCase.saveData(times,isReboot,0);
     }
 
     private void restoreByCamCase(){
         int times = camCase.getTimes();
         Boolean isReboot = camCase.getIsReboot();
-
-        editText.setText(String.valueOf(times));
         rebootCheckBox.setChecked(isReboot);
+        editText.setText(String.valueOf(times));
+        if (editText2.getVisibility() == View.VISIBLE){
+            int rebootTime = camCase.getRebootTime();
+            editText2.setText(String.valueOf(rebootTime));
+        }
+        Log.d("TIMES-----R",String.valueOf(camCase.getTimes()));
+        Log.d("REBOOTTIME-----R",String.valueOf(camCase.getRebootTime()));
+        Log.d("ISREBOOT-----R",camCase.getIsReboot().toString());
     }
 
     private void startActivityFirstAction() {
         Boolean rebootBool = rebootCheckBox.isChecked();
         int times = Integer.valueOf(editText.getText().toString().trim());
+        if (rebootBool) {
+            final int num = Integer.valueOf(editText.getText().toString()) - 1;
+            editText.setText(String.valueOf(num));
+        }
         if (times > 0){
             if (rebootBool){
                 buttonClicked();
