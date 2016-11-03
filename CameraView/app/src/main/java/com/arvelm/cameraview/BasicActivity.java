@@ -209,6 +209,8 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
         myLog = Logging.configureLogger(BasicActivity.class);
 
         myLog.debug("----------------CREATE-----------------");
+        myLog.debug("Main_Camera: " + ImgSensorInfo.getImgSensorInfo()[0]);
+        myLog.debug("Sub_Camera: " + ImgSensorInfo.getImgSensorInfo()[1]);
 
         restoreByCamCase();
 
