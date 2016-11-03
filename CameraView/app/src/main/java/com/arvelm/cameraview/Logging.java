@@ -22,8 +22,8 @@ public class Logging {
         logConfigurator.setRootLevel(Level.DEBUG);
         logConfigurator.setLevel("org.apache",Level.ERROR);
         logConfigurator.setUseFileAppender(true);
-//        logConfigurator.setFilePattern("%d %-5p %m%n");
-        logConfigurator.setFilePattern("%d{ISO8601} %m%n");
+//        logConfigurator.setFilePattern("%d{ISO8601} %m%n");
+        logConfigurator.setFilePattern("  %m%n");
 //        logConfigurator.setImmediateFlush(true);
         logConfigurator.configure();
 
