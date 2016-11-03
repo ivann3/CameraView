@@ -24,7 +24,7 @@ public class Logging {
         logConfigurator.setUseFileAppender(true);
 //        logConfigurator.setFilePattern("%d %-5p %m%n");
         logConfigurator.setFilePattern("%d{ISO8601} %m%n");
-        logConfigurator.setImmediateFlush(true);
+//        logConfigurator.setImmediateFlush(true);
         logConfigurator.configure();
 
         Logger log = Logger.getLogger(clazz);

@@ -23,6 +23,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.text.InputType;
@@ -148,7 +149,9 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
 
     private  CamCase camCase;
 
-    private static  final Logger MY_LOG = Logging.configureLogger(BasicActivity.class);
+    private static final Logger MY_LOG = Logging.configureLogger(BasicActivity.class);
+
+    private long timeTag = 0;
 
     private  Handler actionHandler = new Handler(){
         @Override
@@ -162,17 +165,6 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
                         final int num = Integer.valueOf(editText.getText().toString()) - msg.what;
                         editText.setText(String.valueOf(num));
                     }
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                Thread.sleep(2*1000);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                            if (timerState) switchCamera();
-                        }
-                    }).start();
 
                     new Thread(new Runnable() {
                         @Override
@@ -180,6 +172,7 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
                             galleryAddPic();
                         }
                     }).start();
+
                     break;
             }
         }
@@ -298,8 +291,21 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
         try {
             mCameraManager.openCamera(mCameraId, mStateCallBack, mBackgroundHandler);
             MY_LOG.debug("----------OPEN----------");
-            if (mCameraId.equals(CAMERA_BACK)) MY_LOG.debug("BACK_Camera: Open");
-            if (mCameraId.equals(CAMERA_FRONT)) MY_LOG.debug("FRONT_Camera: Open");
+            if (!rebootCheckBox.isChecked()) {
+                MY_LOG.debug("Times: " + editText.getText().toString().trim());
+            }
+            if (timeTag==0) {
+                timeTag = System.currentTimeMillis();
+                if (mCameraId.equals(CAMERA_BACK)) MY_LOG.debug("0" + "ms: BACK_Camera: Open");
+                if (mCameraId.equals(CAMERA_FRONT)) MY_LOG.debug("0" + "ms: FRONT_Camera: Open");
+            }else{
+                String strTime = String.valueOf(getPeriodTimeTag(timeTag));
+                if (mCameraId.equals(CAMERA_BACK)) MY_LOG.debug(strTime + "ms: BACK_Camera: Open");
+                if (mCameraId.equals(CAMERA_FRONT)) MY_LOG.debug(strTime + "ms: FRONT_Camera: Open");
+                }
+
+
+
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
@@ -372,14 +378,24 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
                                 // Finally, we start displaying the camera preview.
                                 mPreviewRequest = mPreviewRequestBuilder.build();
                                 mCameraCaptureSession.setRepeatingRequest(mPreviewRequest,
-                                        null, null);
-                                if (mCameraId.equals(CAMERA_BACK)) MY_LOG.debug("BACK_Camera: Open Complete");
-                                if (mCameraId.equals(CAMERA_FRONT)) MY_LOG.debug("FRONT_Camera: Open Complete");
+                                        new CameraCaptureSession.CaptureCallback() {
+                                            int i = 1;
+                                            @Override
+                                            public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
+                                                super.onCaptureCompleted(session, request, result);
+                                                while(i > 0){
+                                                    String timeStr = String.valueOf(getPeriodTimeTag(timeTag));
+                                                    if (mCameraId.equals(CAMERA_BACK)) MY_LOG.debug(timeStr + "ms: BACK_Camera Open Complete");
+                                                    if (mCameraId.equals(CAMERA_FRONT)) MY_LOG.debug(timeStr + "ms: FRONT_Camera: Open Complete");
+                                                    i--;
+                                                }
+                                            }
+                                        }, null);
+
                             } catch (CameraAccessException e) {
                                 e.printStackTrace();
                             }
                         }
-
                         @Override
                         public void onConfigureFailed(
                                 @NonNull CameraCaptureSession cameraCaptureSession) {
@@ -407,13 +423,30 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
             //setAutoFlash(captureBuilder);
 
             mCameraCaptureSession.stopRepeating();
+            timeTag = SystemClock.currentThreadTimeMillis();
             if (mCameraId.equals(CAMERA_BACK)) MY_LOG.debug("BACK_Camera: Capture");
             if (mCameraId.equals(CAMERA_FRONT)) MY_LOG.debug("FRONT_Camera: Capture");
 
-            mCameraCaptureSession.capture(captureBuilder.build(),null, null);
+            mCameraCaptureSession.capture(captureBuilder.build(), new CameraCaptureSession.CaptureCallback() {
+                @Override
+                public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
+                    super.onCaptureCompleted(session, request, result);
 
-            if (mCameraId.equals(CAMERA_BACK)) MY_LOG.debug("BACK_Camera: Capture Complete");
-            if (mCameraId.equals(CAMERA_FRONT)) MY_LOG.debug("FRONT_Camera: Capture Complete");
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            String stringTime = String.valueOf(getPeriodTimeTag(timeTag));
+                            if (mCameraId.equals(CAMERA_BACK)) MY_LOG.debug(stringTime + "ms: BACK_Camera: Capture Complete");
+                            if (mCameraId.equals(CAMERA_FRONT)) MY_LOG.debug(stringTime + "ms: FRONT_Camera: Capture Complete");
+                        }
+                    }).start();
+
+                    if(timerState || (Integer.valueOf(editText.getText().toString().trim())==0)) switchCamera();
+                }
+            }, null);
+
+
 
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -459,6 +492,7 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
             mCameraDevice.close();
             mCameraDevice = null;
         }
+        timeTag = System.currentTimeMillis();
         if (mCameraId.equals(CAMERA_BACK)) MY_LOG.debug("BACK_Camera: Close");
         if (mCameraId.equals(CAMERA_FRONT)) MY_LOG.debug("FRONT_Camera: Close");
         MY_LOG.debug("----------CLOSE---------");
@@ -587,13 +621,15 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
                         actionTimer.schedule(new LoopTask(SWITCH_CAPTURE), 0, 6 * 1000);
                         timerState = true;
                         editText.setInputType(InputType.TYPE_NULL);
-                        if(editText2.getVisibility() == View.VISIBLE){
+                        if (editText2.getVisibility() == View.VISIBLE) {
                             editText2.setInputType(InputType.TYPE_NULL);
                         }
                         rebootCheckBox.setEnabled(false);
                         switchButton.setText(STOP_BUTTON_DISPLAY);
                         switchButton.setBackgroundResource(R.drawable.button_red);
                         checkBoxIsChecked(rebootCheckBox.isChecked());
+                        createCameraPreviewSession();
+                        MY_LOG.debug("START");
                     }
                 }
                 break;
@@ -610,6 +646,7 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
                 switchButton.setText(START_BUTTON_DISPLAY);
                 switchButton.setBackgroundResource(R.drawable.button_green);
                 CamCase.setRebootServiceTag(false);
+                MY_LOG.debug("STOP");
                 break;
         }
     }
@@ -684,5 +721,10 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
                 buttonClicked();
             }
         }
+    }
+
+    private long getPeriodTimeTag(Long timeTag){
+        long lastTime = System.currentTimeMillis();
+        return (lastTime - timeTag) * 1000;
     }
 }
