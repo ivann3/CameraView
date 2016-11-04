@@ -27,6 +27,12 @@
             </intent-filter>
         </activity>
 
+        //ManualActivity
+        <activity android:name=".ManualActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.NoActionBar">;
+        </activity>
+
         //REBOOT DEVICE AFTER THE DELAY_TIME
         <service android:name=".RebootService"/>
 

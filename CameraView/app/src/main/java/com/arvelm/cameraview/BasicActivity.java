@@ -139,6 +139,7 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
     private CheckBox rebootCheckBox;
     private EditText editText;
     private EditText editText2;
+    private Button infoButton;
 
     private static final String SWITCH_CAPTURE = "switch";
     private static final String START_BUTTON_DISPLAY = "START";
@@ -174,7 +175,6 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
                             galleryAddPic();
                         }
                     }).start();
-
                     break;
             }
         }
@@ -192,6 +192,8 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
          */
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+        showManualInfo(this.getApplicationContext());
+
         mTextureView = (TextureView) findViewById(R.id.textureView);
         editText = (EditText) findViewById(R.id.editText);
         switchButton = (Button) findViewById(R.id.switchButton);
@@ -199,6 +201,8 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
         rebootCheckBox = (CheckBox)findViewById(R.id.rebootCheckBox);
         rebootCheckBox.setOnCheckedChangeListener(this);
         editText2 = (EditText)findViewById(R.id.editText_2);
+        infoButton = (Button)findViewById(R.id.infoButton);
+        infoButton.setOnClickListener(this);
 
         mCameraId = CAMERA_BACK;
 
@@ -213,9 +217,7 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
         myLog.debug("Sub_Camera: " + ImgSensorInfo.getImgSensorInfo()[1]);
 
         restoreByCamCase();
-
         startActivityFirstAction();
-
 
         super.onCreate(savedInstanceState);
         // ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -246,7 +248,7 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
     @Override
     protected void onStop() {
         super.onStop();
-        finish();
+        if (!FirstStartUp.showManualInfo) finish();
     }
 
     @Override
@@ -258,7 +260,7 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
         }
         closeCamera();
         myLog.debug("---------------DESTORYED---------------");
-        myLog.debug("");
+//        myLog.debug("");
         super.onDestroy();
     }
 
@@ -471,6 +473,17 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
             case R.id.switchButton:
                 saveByCamCase();
                 buttonClicked();
+                break;
+            case R.id.infoButton:
+                if (timerState){
+                    buttonClicked();
+                }
+                Intent intent = new Intent(this,ManualActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                FirstStartUp.showManualInfo = true;
+                break;
+            default:
                 break;
         }
     }
@@ -750,6 +763,16 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
         File file = new File(picturePath + File.separator + fileName);
         if (!file.exists()){
             file.mkdir();
+        }
+    }
+
+    private void showManualInfo(Context context){
+        if (FirstStartUp.isFirstStartup(context)){
+            Intent intent = new Intent(this,ManualActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            FirstStartUp.firstStartSupFalse(context);
+            finish();
         }
     }
 

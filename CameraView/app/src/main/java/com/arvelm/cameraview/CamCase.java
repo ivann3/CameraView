@@ -12,7 +12,6 @@ public class CamCase {
     private static final int DEFAULT_TIMES = 100;
     private static final Boolean DEFAULT_REBOOT = false;
 
-
     private static final String TIMES_KEY = "times";
     private static final String REBOOT_KEY = "isReboot";
     private static final String REBOOTTIME_KEY = "rebootTime";

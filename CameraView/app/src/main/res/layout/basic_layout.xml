@@ -12,8 +12,8 @@
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
             android:textAlignment="center"
-            android:text="100"
-            android:hint="times"
+            android:text="@string/text_100"
+            android:hint="@string/text_Times"
             android:textSize="20sp"
             android:inputType="number"
             android:maxLength="5"
@@ -26,7 +26,7 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/editText"
             android:layout_centerHorizontal="true"
-            android:text="Reboot"/>
+            android:text="@string/text_Reboot"/>
 
         <EditText
             android:id="@+id/editText_2"
@@ -36,11 +36,20 @@
             android:layout_marginStart="12dp"
             android:textAlignment="center"
             android:textSize="20sp"
-            android:text="1"
-            android:hint="mins"
+            android:text="@string/text_1"
+            android:hint="@string/text_Mins"
             android:inputType="number"
             android:visibility="invisible"
             android:maxLength="3" />
+        <Button
+            android:id="@+id/infoButton"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_alignParentEnd="true"
+            android:background="@drawable/ic_action_info"
+            android:layout_alignBottom="@id/rebootCheckBox"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="2dp"/>
 
     </RelativeLayout>
 
@@ -60,11 +69,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="START"
+            android:text="@string/text_Start"
             android:background="@drawable/button_green"
             android:textColor="@color/colorWhite"
             android:textSize="20sp"/>
-
 
     </LinearLayout>
 
