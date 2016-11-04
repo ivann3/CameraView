@@ -9,8 +9,9 @@
 
     <string name="text_Title">使用说明</string>;
     <string name="text_Setting_0">使用前请进行以下操作</string>
-    <string name="text_Setting_1">1.开启本应用相机与存储空间的使用权限</string>
-    <string name="text_Setting_2">2.系统休眠时间设置为5分钟以上。</string>
+    <string name="text_Setting_1">1.开启本应用&quot;相机&quot;与&quot;存储空间&quot;的使用权限</string>
+    <string name="text_Setting_2">2.系统休眠时间设置为&quot;5分钟以上&quot;。</string>
+    <string name="text_Setting_3">3.屏幕锁定方式选为&quot;无&quot;</string>
 
     <string name="text_Function_Title">基本功能</string>
     <string name="text_Function_1">1.前后摄切换拍照: 直接输入切换次数，按下START开始。</string>

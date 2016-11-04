@@ -24,6 +24,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.text.InputType;
 import android.util.Log;
@@ -157,6 +158,8 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
     private String timeCaptureCamera = null;
     private String timeSwitchCamera = null;
 
+    private Boolean grantPermission = false;
+
     private  Handler actionHandler = new Handler(){
         @Override
         public void handleMessage(Message msg) {
@@ -192,7 +195,9 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
          */
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        showManualInfo(this.getApplicationContext());
+        showManualInfo(getApplicationContext());
+
+        grantStoragePermission();
 
         mTextureView = (TextureView) findViewById(R.id.textureView);
         editText = (EditText) findViewById(R.id.editText);
@@ -210,11 +215,13 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
 
         camCase = new CamCase(getApplicationContext());
 
-        myLog = Logging.configureLogger(BasicActivity.class);
+        if (grantPermission) {
+            myLog = Logging.configureLogger(BasicActivity.class);
+            myLog.debug("----------------CREATE-----------------");
+            myLog.debug("Main_Camera: " + ImgSensorInfo.getImgSensorInfo()[0]);
+            myLog.debug("Sub_Camera: " + ImgSensorInfo.getImgSensorInfo()[1]);
+        }
 
-        myLog.debug("----------------CREATE-----------------");
-        myLog.debug("Main_Camera: " + ImgSensorInfo.getImgSensorInfo()[0]);
-        myLog.debug("Sub_Camera: " + ImgSensorInfo.getImgSensorInfo()[1]);
 
         restoreByCamCase();
         startActivityFirstAction();
@@ -227,10 +234,11 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
     @Override
     protected void onResume() {
         super.onPause();
-        checkLogFile();
+        if (grantPermission){
+            checkLogFile();
+        }
         startBackgroundThread();
         reOpenCamera();
-
     }
 
     @Override
@@ -259,8 +267,10 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
             timerState = false;
         }
         closeCamera();
-        myLog.debug("---------------DESTORYED---------------");
-//        myLog.debug("");
+        if (grantPermission){
+            myLog.debug("---------------DESTORYED---------------");
+            myLog.debug("");
+        }
         super.onDestroy();
     }
 
@@ -521,7 +531,8 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
 //        if (mCameraId.equals(CAMERA_BACK)) myLog.debug("BACK_Camera: Close");
 //        if (mCameraId.equals(CAMERA_FRONT)) myLog.debug("FRONT_Camera: Close");
         if (timerState){
-        myLog.debug(timeOpenCamera + "      " + timeCaptureCamera + "         " + timeSwitchCamera);
+            if(grantPermission)
+                myLog.debug(timeOpenCamera + "      " + timeCaptureCamera + "         " + timeSwitchCamera);
         }
 
     }
@@ -659,7 +670,8 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
                         if(mTextureView.isAvailable()){
                             createCameraPreviewSession();
                         }
-                        myLog.debug("OpenTime" + "    " + "CaptureTime" + "   " + "SwitchTime" + "(ms)");
+                        if(grantPermission)
+                            myLog.debug("OpenTime" + "    " + "CaptureTime" + "   " + "SwitchTime" + "(ms)");
                     }
                 }
                 break;
@@ -766,14 +778,46 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
         }
     }
 
+
     private void showManualInfo(Context context){
         if (FirstStartUp.isFirstStartup(context)){
             Intent intent = new Intent(this,ManualActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
             FirstStartUp.firstStartSupFalse(context);
-            finish();
         }
     }
 
+    // Get The Camera Permission from here
+     private void grantStoragePermission(){
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED){
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE)){
+
+            }else{
+                ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
+            }
+        }else{
+            grantPermission = true;
+        }
+    }
+
+    //System CallBack---Detect the result if User "Accept" or "Deny"
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case 1:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    grantPermission = true;
+                    Log.d("STORAGE_PERMISSION","Granted");
+                } else {
+                    Log.d("STORAGE_PERMISSION","Deny");
+                }
+                break;
+            default:
+                break;
+        }
+    }
 }
