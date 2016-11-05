@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">CameraView</string>
+    <string name="text_Start">START</string>
+    <string name="text_Reboot">Reboot</string>
+    <string name="text_Times">times</string>
+    <string name="text_Mins">mins</string>
+    <string name="text_100">100</string>
+    <string name="text_1">1</string>
+
+    <string name="text_Title">使用说明</string>;
+    <string name="text_Setting_0">使用前请进行以下操作</string>
+    <string name="text_Setting_1">1.开启本应用&quot;相机&quot;与&quot;存储空间&quot;的使用权限</string>
+    <string name="text_Setting_2">2.系统休眠时间设置为&quot;5分钟以上&quot;。</string>
+    <string name="text_Setting_3">3.屏幕锁定方式选为&quot;无&quot;</string>
+
+    <string name="text_Function_Title">基本功能</string>
+    <string name="text_Function_1">1.前后摄切换拍照: 直接输入切换次数，按下START开始。</string>
+    <string name="text_Function_2">2.勾选重启功能,前后摄切换拍照: 输入重启次数，输入重启的间隔时间(分钟),按Start开始。</string>
+    <string name="text_Function_3">3.照片存储路径: 根目录/Pictures/CameraView/</string>
+
+    <string name="text_Log_Title">日志功能</string>
+    <string name="text_Log_1">1.存储路径: 根目录/Pictures/CameraView.log</string>
+
+</resources>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <EditText
+            android:id="@+id/editText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:textAlignment="center"
+            android:text="@string/text_100"
+            android:hint="@string/text_Times"
+            android:textSize="20sp"
+            android:inputType="number"
+            android:maxLength="5"
+            android:textIsSelectable="false"
+            />
+
+        <CheckBox
+            android:id="@+id/rebootCheckBox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/editText"
+            android:layout_centerHorizontal="true"
+            android:text="@string/text_Reboot"/>
+
+        <EditText
+            android:id="@+id/editText_2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@+id/editText"
+            android:layout_marginStart="12dp"
+            android:textAlignment="center"
+            android:textSize="20sp"
+            android:text="@string/text_1"
+            android:hint="@string/text_Mins"
+            android:inputType="number"
+            android:visibility="invisible"
+            android:maxLength="3" />
+        <Button
+            android:id="@+id/infoButton"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_alignParentEnd="true"
+            android:background="@drawable/ic_action_info"
+            android:layout_alignBottom="@id/rebootCheckBox"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="2dp"/>
+
+    </RelativeLayout>
+
+    <TextureView
+            android:id="@+id/textureView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"/>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:id="@+id/switchButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/text_Start"
+            android:background="@drawable/button_green"
+            android:textColor="@color/colorWhite"
+            android:textSize="20sp"/>
+
+    </LinearLayout>
+
+
+</LinearLayout>
+
