@@ -801,7 +801,7 @@ public class BasicActivity extends Activity implements View.OnClickListener,Comp
         }else{
             grantPermission = true;
         }
-    }F
+    }
 
     //System CallBack---Detect the result if User "Accept" or "Deny"
     @Override
